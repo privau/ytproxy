@@ -11,7 +11,6 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/kolesa-team/go-webp/encoder"
