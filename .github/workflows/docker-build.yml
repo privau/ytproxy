@@ -1,6 +1,7 @@
 name: Docker Multi-Architecture Build
 
 on:
+  workflow_dispatch:
   push:
     paths-ignore:
       - "**.md"
