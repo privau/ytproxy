@@ -305,21 +305,16 @@ func main() {
 	disable_ipv6 = os.Getenv("DISABLE_IPV6") == "1"
 	disable_webp = os.Getenv("DISABLE_WEBP") == "1"
 
-	socket := "socket" + string(os.PathSeparator) + "http-proxy.sock"
-	syscall.Unlink(socket)
-	listener, err := net.Listen("unix", socket)
 	srv := &http.Server{
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 1 * time.Hour,
 		Addr:         ":8080",
 		Handler:      &requesthandler{},
 	}
+	
+	err := srv.ListenAndServe()
 	if err != nil {
-		fmt.Println("Failed to bind to UDS, falling back to TCP/IP")
+		fmt.Println("Failed to start the server:")
 		fmt.Println(err.Error())
-		srv.ListenAndServe()
-	} else {
-		defer listener.Close()
-		srv.Serve(listener)
 	}
 }
