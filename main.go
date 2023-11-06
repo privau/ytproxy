@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"image/jpeg"
 	"io"
 	"log"
 	"net"
@@ -12,16 +11,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/kolesa-team/go-webp/encoder"
-	"github.com/kolesa-team/go-webp/webp"
-	"github.com/quic-go/quic-go/http3"
 )
-
-// http/3 client
-var h3client = &http.Client{
-	Transport: &http3.RoundTripper{},
-}
 
 var dialer = &net.Dialer{
 	Timeout:   30 * time.Second,
@@ -32,9 +22,6 @@ var dialer = &net.Dialer{
 var h2client = &http.Client{
 	Transport: &http.Transport{
 		Dial: func(network, addr string) (net.Conn, error) {
-			if disable_ipv6 {
-				network = "tcp4"
-			}
 			return dialer.Dial(network, addr)
 		},
 		TLSHandshakeTimeout:   10 * time.Second,
@@ -75,9 +62,6 @@ var strip_headers = []string{
 var path_prefix = ""
 
 var manifest_re = regexp.MustCompile(`(?m)URI="([^"]+)"`)
-
-var disable_ipv6 = false
-var disable_webp = false
 
 type requesthandler struct{}
 
@@ -208,18 +192,6 @@ func (*requesthandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 
 		io.WriteString(w, strings.Join(lines, "\n"))
-	} else if !disable_webp && resp.Header.Get("Content-Type") == "image/jpeg" {
-		img, err := jpeg.Decode(resp.Body)
-
-		if err != nil {
-			log.Panic(err)
-		}
-
-		options, _ := encoder.NewLossyEncoderOptions(encoder.PresetDefault, 85)
-
-		w.Header().Set("Content-Type", "image/webp")
-
-		webp.Encode(w, img, options)
 	} else {
 		io.Copy(w, resp.Body)
 	}
@@ -300,9 +272,6 @@ func RelativeUrl(in string) (newurl string) {
 
 func main() {
 	path_prefix = os.Getenv("PREFIX_PATH")
-
-	disable_ipv6 = os.Getenv("DISABLE_IPV6") == "1"
-	disable_webp = os.Getenv("DISABLE_WEBP") == "1"
 
 	srv := &http.Server{
 		ReadTimeout:  5 * time.Second,
