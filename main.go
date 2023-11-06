@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -45,8 +44,6 @@ var allowed_hosts = []string{
 	"ytimg.com",
 	"ggpht.com",
 	"googleusercontent.com",
-	"lbryplayer.xyz",
-	"odycdn.com",
 }
 
 var strip_headers = []string{
@@ -58,8 +55,6 @@ var strip_headers = []string{
 	"Set-Cookie",
 	"Etag",
 }
-
-var path_prefix = ""
 
 var manifest_re = regexp.MustCompile(`(?m)URI="([^"]+)"`)
 
@@ -149,7 +144,6 @@ func (*requesthandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	var client *http.Client
 
-	// https://github.com/lucas-clemente/quic-go/issues/2836
 	client = h2client
 
 	resp, err := client.Do(request)
@@ -222,23 +216,13 @@ func getHost(path string) (host string) {
 
 	host = ""
 
-	if strings.HasPrefix(path, "/vi/") || strings.HasPrefix(path, "/vi_webp/") || strings.HasPrefix(path, "/sb/") {
+	if strings.HasPrefix(path, "/vi/") || strings.HasPrefix(path, "/sb/") {
 		host = "i.ytimg.com"
 	}
 
 	if strings.HasPrefix(path, "/ggpht/") {
 		host = "yt3.ggpht.com"
 	}
-
-	if strings.HasPrefix(path, "/a/") || strings.HasPrefix(path, "/ytc/") {
-		host = "yt3.ggpht.com"
-	}
-
-	if strings.Contains(path, "/host/") {
-		path = path[(strings.Index(path, "/host/") + 6):]
-		host = path[0:strings.Index(path, "/")]
-	}
-
 	return host
 }
 
@@ -266,13 +250,10 @@ func RelativeUrl(in string) (newurl string) {
 	segment_query := segment_url.Query()
 	segment_query.Set("host", segment_url.Hostname())
 	segment_url.RawQuery = segment_query.Encode()
-	segment_url.Path = path_prefix + segment_url.Path
 	return segment_url.RequestURI()
 }
 
 func main() {
-	path_prefix = os.Getenv("PREFIX_PATH")
-
 	srv := &http.Server{
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 1 * time.Hour,
