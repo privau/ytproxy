@@ -2,8 +2,6 @@ FROM golang:alpine AS build
 
 WORKDIR /app/
 
-RUN apk add --no-cache build-base libwebp-dev
-
 COPY . .
 
 RUN  --mount=type=cache,target=/root/.cache/go-build \
@@ -11,10 +9,8 @@ RUN  --mount=type=cache,target=/root/.cache/go-build \
 
 FROM alpine:edge
 
-RUN apk add --no-cache libwebp
-
 WORKDIR /app/
 
-COPY --from=build /app/main /app/http3-ytproxy
+COPY --from=build /app/main /app/ytproxy
 
-CMD ./http3-ytproxy
+CMD ./ytproxy

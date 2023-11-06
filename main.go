@@ -35,8 +35,7 @@ var h2client = &http.Client{
 	},
 }
 
-// user agent to use
-var ua = "Mozilla/5.0 (Windows NT 10.0; rv:78.0) Gecko/20100101"
+var ua = "Mozilla/5.0 (Windows NT 10.0; rv:78.0) Gecko/20100101" // user agent
 
 var allowed_hosts = []string{
 	"youtube.com",
@@ -80,7 +79,15 @@ func (*requesthandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if len(host) <= 0 {
-		host = getHost(req.URL.EscapedPath())
+		path := req.URL.EscapedPath()
+
+		if strings.HasPrefix(path, "/vi/") || strings.HasPrefix(path, "/sb/") {
+			host = "i.ytimg.com"
+		}
+		
+		if strings.HasPrefix(path, "/ggpht/") {
+			host = "yt3.ggpht.com"
+		}
 	}
 
 	if len(host) <= 0 {
@@ -119,7 +126,6 @@ func (*requesthandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	path := req.URL.EscapedPath()
 
 	path = strings.Replace(path, "/ggpht", "", 1)
-	path = strings.Replace(path, "/i/", "/", 1)
 
 	proxyURL, err := url.Parse("https://" + host + path)
 
@@ -210,20 +216,6 @@ outer:
 			}
 		}
 	}
-}
-
-func getHost(path string) (host string) {
-
-	host = ""
-
-	if strings.HasPrefix(path, "/vi/") || strings.HasPrefix(path, "/sb/") {
-		host = "i.ytimg.com"
-	}
-
-	if strings.HasPrefix(path, "/ggpht/") {
-		host = "yt3.ggpht.com"
-	}
-	return host
 }
 
 func getBestThumbnail(path string) (newpath string) {
